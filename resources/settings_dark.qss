@@ -1,0 +1,157 @@
+/* Vaani — dark theme (settings + onboarding) */
+QDialog#VaaniSettingsRoot,
+QWidget#VaaniOnboardingRoot {
+    background-color: #15171c;
+    color: #e8eaed;
+    font-family: "Segoe UI", sans-serif;
+    font-size: 13px;
+}
+
+QLabel#vaaniSettingsTitle,
+QLabel#vaaniOnboardingTitle {
+    font-size: 20px;
+    font-weight: 600;
+    color: #f3f4f6;
+}
+
+QLabel#vaaniSettingsSubtitle,
+QLabel#vaaniOnboardingSubtitle,
+QLabel#vaaniStepIndicator,
+QLabel.vaaniSettingsHint,
+QLabel.vaaniOnboardingBody {
+    color: #9aa3b0;
+    font-size: 12px;
+}
+
+QFrame.vaaniSettingsSection {
+    background-color: #1e2128;
+    border: 1px solid #2d323c;
+    border-radius: 10px;
+}
+
+QLabel.vaaniSectionTitle {
+    font-size: 12px;
+    font-weight: 600;
+    color: #b8c0cc;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+QComboBox, QLineEdit, #vaaniHotkeyCapture {
+    background-color: #252a32;
+    border: 1px solid #3a414d;
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: #e8eaed;
+    min-height: 20px;
+}
+
+QComboBox:hover, #vaaniHotkeyCapture:hover {
+    border-color: #5c6470;
+}
+
+QComboBox:focus, #vaaniHotkeyCapture:focus {
+    border-color: #6b9fff;
+}
+
+#vaaniHotkeyCapture[capturing="true"] {
+    border-color: #6b9fff;
+    background-color: #1a2740;
+}
+
+QCheckBox {
+    spacing: 8px;
+}
+
+QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 1px solid #5c6470;
+    background: #252a32;
+}
+
+QCheckBox::indicator:checked {
+    background: #6b9fff;
+    border-color: #6b9fff;
+}
+
+QLabel#vaaniRefusalLabel {
+    color: #f97066;
+    font-size: 12px;
+}
+
+QPushButton#vaaniPrimaryButton {
+    background-color: #6b9fff;
+    color: #0d1117;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 22px;
+    font-weight: 600;
+}
+
+QPushButton#vaaniPrimaryButton:hover {
+    background-color: #8ab4ff;
+}
+
+QPushButton#vaaniSecondaryButton {
+    background-color: transparent;
+    color: #c8cdd6;
+    border: 1px solid #3a414d;
+    border-radius: 8px;
+    padding: 9px 16px;
+}
+
+QPushButton#vaaniSecondaryButton:hover {
+    background-color: #252a32;
+}
+
+QLabel#vaaniOnboardingPageTitle {
+    font-size: 17px;
+    font-weight: 600;
+    color: #f3f4f6;
+}
+
+QFrame#vaaniOnboardingCard {
+    background-color: #1e2128;
+    border: 1px solid #2d323c;
+    border-radius: 12px;
+}
+
+QProgressBar {
+    background-color: #2d323c;
+    border: none;
+    border-radius: 6px;
+    min-height: 10px;
+    text-align: center;
+    color: #9aa3b0;
+    font-size: 11px;
+}
+
+QProgressBar::chunk {
+    background-color: #6b9fff;
+    border-radius: 6px;
+}
+
+QScrollArea#VaaniSettingsScroll,
+QWidget#VaaniSettingsContent {
+    background: transparent;
+    border: none;
+}
+
+QScrollBar:vertical {
+    width: 10px;
+    margin: 0;
+    background: transparent;
+}
+
+QScrollBar::handle:vertical {
+    background: #4b5563;
+    border-radius: 5px;
+    min-height: 24px;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+}

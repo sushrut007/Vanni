@@ -1,0 +1,8 @@
+#pragma once
+
+#include <QLoggingCategory>
+
+Q_DECLARE_LOGGING_CATEGORY(lcUtils)
+Q_DECLARE_LOGGING_CATEGORY(lcAudio)
+Q_DECLARE_LOGGING_CATEGORY(lcSpeech)
+Q_DECLARE_LOGGING_CATEGORY(lcLanguage)

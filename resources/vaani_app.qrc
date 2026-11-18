@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/vaani">
+        <file alias="vaani_app_icon.png">vaani_app_icon.png</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <file alias="vaani-logo.png">icons/vaani-logo.png</file>
+    </qresource>
+</RCC>
