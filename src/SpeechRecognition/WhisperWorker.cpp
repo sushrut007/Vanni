@@ -508,7 +508,7 @@ void WhisperWorker::transcribeWithTokens(const QByteArray& pcmBuffer, const QVec
         if (m_currentConfig.enableAdvancedVAD) {
             const bool speech = WhisperDecoding::sliceHoldsSpeech(pcm);
             loudnessHeardSpeech = speech;
-            if (!useSilero && !speech && !rawMode) {
+            if (!useSilero && !speech && !rawMode && !wholeUtterance) {
                 vadSilence = true;
                 // Lock releases at block exit; emit happens below.
             }

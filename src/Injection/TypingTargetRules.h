@@ -14,6 +14,7 @@ enum class BlockReason {
     OwnProcessForeground,
     ElevatedTarget,
     LikelyPasswordField,
+    NoInputFocused,
 };
 
 inline QString blockReasonMessage(BlockReason reason)
@@ -33,6 +34,8 @@ inline QString blockReasonMessage(BlockReason reason)
         return QStringLiteral("Cannot paste into a window running as administrator.");
     case BlockReason::LikelyPasswordField:
         return QStringLiteral("The focused field may be a password box — paste was not sent.");
+    case BlockReason::NoInputFocused:
+        return QStringLiteral("No text input field is focused — click where you want to type, or copy the transcribed text below.");
     }
     return QStringLiteral("Text could not be inserted.");
 }

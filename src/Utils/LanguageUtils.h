@@ -384,6 +384,30 @@ inline const QSet<QString>& supportedDictationLanguageCodes()
 }
 
 /**
+ * @brief All supported languages as (Display Name, Code) pairs, sorted alphabetically.
+ */
+inline QList<QPair<QString, QString>> allSupportedLanguagesSorted()
+{
+    QStringList allKeys = primaryDictationLanguages();
+    allKeys += additionalDictationLanguages();
+    QList<QPair<QString, QString>> list;
+    QSet<QString> seenCodes;
+    for (const QString& key : allKeys) {
+        const QString code = languageCodeFromDisplay(key);
+        if (!seenCodes.contains(code)) {
+            seenCodes.insert(code);
+            list.append({ displayFromLanguageCode(code), code });
+        }
+    }
+    QCollator collator{QLocale()};
+    collator.setCaseSensitivity(Qt::CaseInsensitive);
+    std::sort(list.begin(), list.end(), [&collator](const QPair<QString, QString>& a, const QPair<QString, QString>& b) {
+        return collator.compare(a.first, b.first) < 0;
+    });
+    return list;
+}
+
+/**
  * @brief English display text for a stored language key.
  *
  * Two keys are camelCase compounds for settings round-trip compatibility and

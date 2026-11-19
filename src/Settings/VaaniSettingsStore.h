@@ -23,6 +23,9 @@ public:
     QString dictationLanguageCode() const;
     void setDictationLanguageCode(const QString& code);
 
+    QStringList primaryLanguages() const;
+    void setPrimaryLanguages(const QStringList& codes);
+
     QString microphoneEndpointId() const;
     void setMicrophoneEndpointId(const QString& endpointId);
 
@@ -58,6 +61,7 @@ public:
 
 signals:
     void dictationLanguageChanged(const QString& code);
+    void primaryLanguagesChanged(const QStringList& codes);
     void microphoneEndpointChanged(const QString& endpointId);
     void keystrokeFallbackChanged(bool enabled);
     void injectPartialResultsChanged(bool enabled);
@@ -69,6 +73,7 @@ signals:
 
 private:
     QString m_dictationLanguage = QStringLiteral("en");
+    QStringList m_primaryLanguages = { QStringLiteral("en") };
     QString m_microphoneEndpointId;
     bool m_keystrokeFallback = false;
     bool m_injectPartials = false;

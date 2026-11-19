@@ -109,6 +109,29 @@ void VaaniSettingsStore::setDictationLanguageCode(const QString& code)
     emit dictationLanguageChanged(m_dictationLanguage);
 }
 
+QStringList VaaniSettingsStore::primaryLanguages() const
+{
+    return m_primaryLanguages;
+}
+
+void VaaniSettingsStore::setPrimaryLanguages(const QStringList& codes)
+{
+    QStringList normalized;
+    for (const QString& c : codes) {
+        const QString norm = c.trimmed().toLower();
+        if (!norm.isEmpty() && !normalized.contains(norm))
+            normalized.append(norm);
+    }
+    if (normalized.isEmpty())
+        normalized.append(QStringLiteral("en"));
+
+    if (normalized == m_primaryLanguages)
+        return;
+
+    m_primaryLanguages = normalized;
+    emit primaryLanguagesChanged(m_primaryLanguages);
+}
+
 QString VaaniSettingsStore::microphoneEndpointId() const
 {
     return m_microphoneEndpointId;
@@ -244,10 +267,28 @@ void VaaniSettingsStore::load()
     const QString displayLang =
         settings.value(QLatin1String(kDictationLanguageKey), QStringLiteral("English"))
             .toString();
+    const QString primaryLangsVal =
+        settings.value(QLatin1String("PrimaryLanguages")).toString();
     settings.endGroup();
     const QString code = LanguageUtils::languageCodeFromDisplay(displayLang);
     if (!code.isEmpty())
         m_dictationLanguage = code;
+
+    m_primaryLanguages.clear();
+    if (!primaryLangsVal.isEmpty()) {
+        const QStringList parts = primaryLangsVal.split(QLatin1Char(','), Qt::SkipEmptyParts);
+        for (const QString& p : parts) {
+            const QString pCode = p.trimmed().toLower();
+            if (!pCode.isEmpty() && !m_primaryLanguages.contains(pCode))
+                m_primaryLanguages.append(pCode);
+        }
+    }
+    if (m_primaryLanguages.isEmpty()) {
+        m_primaryLanguages.append(m_dictationLanguage);
+    }
+    if (!m_primaryLanguages.contains(m_dictationLanguage)) {
+        m_primaryLanguages.prepend(m_dictationLanguage);
+    }
 
     settings.beginGroup(QString::fromLatin1(kMicrophoneGroup));
     m_microphoneEndpointId =
@@ -289,6 +330,7 @@ void VaaniSettingsStore::save()
     settings.beginGroup(QString::fromLatin1(kLanguageGroup));
     settings.setValue(QLatin1String(kDictationLanguageKey),
                       LanguageUtils::displayFromLanguageCode(m_dictationLanguage));
+    settings.setValue(QLatin1String("PrimaryLanguages"), m_primaryLanguages.join(QLatin1Char(',')));
     settings.endGroup();
 
     settings.beginGroup(QString::fromLatin1(kMicrophoneGroup));

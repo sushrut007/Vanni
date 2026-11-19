@@ -7,6 +7,9 @@ class VaaniSettingsStore;
 class QCheckBox;
 class QComboBox;
 class QLabel;
+class QLineEdit;
+class QListWidget;
+class QListWidgetItem;
 class QProgressBar;
 class QPushButton;
 class QStackedWidget;
@@ -35,6 +38,8 @@ private:
     void buildPages();
     void refreshMicrophones();
     void refreshModelPage();
+    void updateDefaultLangCombo();
+    void saveLanguagesFromOnboarding();
     void updateNav();
 
     VaaniCoreController* m_core = nullptr;
@@ -43,6 +48,9 @@ private:
     QPushButton* m_back = nullptr;
     QPushButton* m_next = nullptr;
     QComboBox* m_modelCombo = nullptr;
+    QLineEdit* m_langSearch = nullptr;
+    QListWidget* m_langList = nullptr;
+    QComboBox* m_defaultLangCombo = nullptr;
     QComboBox* m_micCombo = nullptr;
     VaaniHotkeyCaptureField* m_hotkeyField = nullptr;
     QLabel* m_stepIndicator = nullptr;

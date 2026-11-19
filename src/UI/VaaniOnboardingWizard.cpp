@@ -8,6 +8,7 @@
 #include "Settings/VaaniHotkeyCaptureField.h"
 #include "Settings/VaaniSettingsStore.h"
 #include "Settings/VaaniSettingsStyle.h"
+#include "Utils/LanguageUtils.h"
 #include "Utils/VaaniBrandIcon.h"
 
 #include <QtGlobal>
@@ -19,6 +20,8 @@
 #include <QIcon>
 #include <climits>
 #include <QLabel>
+#include <QLineEdit>
+#include <QListWidget>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QStackedWidget>
@@ -164,6 +167,73 @@ void VaaniOnboardingWizard::buildPages()
         connect(m_downloadBtn, &QPushButton::clicked, this, &VaaniOnboardingWizard::startDownload);
         lay->addWidget(m_downloadBtn, 0, Qt::AlignLeft);
         lay->addStretch();
+        auto* page = new QWidget(this);
+        auto* wrap = new QVBoxLayout(page);
+        wrap->setContentsMargins(0, 0, 0, 0);
+        wrap->addWidget(card);
+        m_stack->addWidget(page);
+    }
+
+    {
+        QVBoxLayout* lay = nullptr;
+        auto* card = makeCard(this, &lay);
+        auto* pageTitle = new QLabel(QStringLiteral("Primary languages"), card);
+        pageTitle->setObjectName(QStringLiteral("vaaniOnboardingPageTitle"));
+        lay->addWidget(pageTitle);
+
+        auto* hint = new QLabel(
+            QStringLiteral(
+                "Select the languages you speak. These will appear in your system tray context menu "
+                "for quick 1-click switching."),
+            card);
+        hint->setWordWrap(true);
+        hint->setObjectName(QStringLiteral("vaaniOnboardingBody"));
+        lay->addWidget(hint);
+
+        m_langSearch = new QLineEdit(card);
+        m_langSearch->setPlaceholderText(QStringLiteral("Search languages (e.g. English, Hindi, Spanish)..."));
+        m_langSearch->setClearButtonEnabled(true);
+        lay->addWidget(m_langSearch);
+
+        m_langList = new QListWidget(card);
+        m_langList->setObjectName(QStringLiteral("vaaniLangList"));
+        m_langList->setMinimumHeight(150);
+        m_langList->setMaximumHeight(190);
+
+        const auto allLanguages = LanguageUtils::allSupportedLanguagesSorted();
+        for (const auto& pair : allLanguages) {
+            auto* item = new QListWidgetItem(pair.first, m_langList);
+            item->setData(Qt::UserRole, pair.second);
+            item->setFlags(item->flags() | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+            if (pair.second == QLatin1String("en"))
+                item->setCheckState(Qt::Checked);
+            else
+                item->setCheckState(Qt::Unchecked);
+        }
+        lay->addWidget(m_langList);
+
+        auto* defaultRow = new QHBoxLayout();
+        auto* defaultLabel = new QLabel(QStringLiteral("Default language:"), card);
+        defaultLabel->setObjectName(QStringLiteral("vaaniOnboardingBody"));
+        defaultRow->addWidget(defaultLabel);
+        m_defaultLangCombo = new QComboBox(card);
+        defaultRow->addWidget(m_defaultLangCombo, 1);
+        lay->addLayout(defaultRow);
+
+        updateDefaultLangCombo();
+
+        connect(m_langSearch, &QLineEdit::textChanged, this, [this](const QString& query) {
+            const QString q = query.trimmed().toLower();
+            for (int i = 0; i < m_langList->count(); ++i) {
+                QListWidgetItem* it = m_langList->item(i);
+                it->setHidden(!q.isEmpty() && !it->text().toLower().contains(q));
+            }
+        });
+
+        connect(m_langList, &QListWidget::itemChanged, this, [this](QListWidgetItem*) {
+            updateDefaultLangCombo();
+        });
+
         auto* page = new QWidget(this);
         auto* wrap = new QVBoxLayout(page);
         wrap->setContentsMargins(0, 0, 0, 0);
@@ -349,6 +419,64 @@ void VaaniOnboardingWizard::onDownloadFinished(const QString& directory)
     updateNav();
 }
 
+void VaaniOnboardingWizard::updateDefaultLangCombo()
+{
+    if (!m_defaultLangCombo || !m_langList)
+        return;
+
+    const QString prevSelected = m_defaultLangCombo->currentData().toString();
+    m_defaultLangCombo->clear();
+
+    for (int i = 0; i < m_langList->count(); ++i) {
+        QListWidgetItem* it = m_langList->item(i);
+        if (it->checkState() == Qt::Checked) {
+            m_defaultLangCombo->addItem(it->text(), it->data(Qt::UserRole));
+        }
+    }
+
+    if (m_defaultLangCombo->count() == 0) {
+        for (int i = 0; i < m_langList->count(); ++i) {
+            if (m_langList->item(i)->data(Qt::UserRole).toString() == QLatin1String("en")) {
+                m_langList->item(i)->setCheckState(Qt::Checked);
+                m_defaultLangCombo->addItem(m_langList->item(i)->text(), QLatin1String("en"));
+                break;
+            }
+        }
+    }
+
+    int idx = m_defaultLangCombo->findData(prevSelected);
+    if (idx >= 0)
+        m_defaultLangCombo->setCurrentIndex(idx);
+    else if (m_defaultLangCombo->count() > 0)
+        m_defaultLangCombo->setCurrentIndex(0);
+}
+
+void VaaniOnboardingWizard::saveLanguagesFromOnboarding()
+{
+    if (!m_store || !m_langList)
+        return;
+
+    QStringList selectedCodes;
+    for (int i = 0; i < m_langList->count(); ++i) {
+        QListWidgetItem* it = m_langList->item(i);
+        if (it->checkState() == Qt::Checked) {
+            const QString code = it->data(Qt::UserRole).toString();
+            if (!code.isEmpty() && !selectedCodes.contains(code))
+                selectedCodes.append(code);
+        }
+    }
+    if (selectedCodes.isEmpty())
+        selectedCodes.append(QStringLiteral("en"));
+
+    m_store->setPrimaryLanguages(selectedCodes);
+
+    if (m_defaultLangCombo && m_defaultLangCombo->currentIndex() >= 0) {
+        const QString activeCode = m_defaultLangCombo->currentData().toString();
+        if (!activeCode.isEmpty())
+            m_store->setDictationLanguageCode(activeCode);
+    }
+}
+
 void VaaniOnboardingWizard::goBack()
 {
     if (m_page <= 0)
@@ -360,12 +488,21 @@ void VaaniOnboardingWizard::goBack()
 
 void VaaniOnboardingWizard::goNext()
 {
-    if (m_page == 2 && m_micCombo && m_store)
+    if (m_page == 1 && !m_modelReady) {
+        m_downloadStatus->setObjectName(QStringLiteral("vaaniRefusalLabel"));
+        m_downloadStatus->setText(QStringLiteral("Download the speech models before continuing."));
+        return;
+    }
+
+    if (m_page == 2)
+        saveLanguagesFromOnboarding();
+    if (m_page == 3 && m_micCombo && m_store)
         m_store->setMicrophoneEndpointId(m_micCombo->currentData().toString());
-    if (m_page == 3 && m_hotkeyField && m_store)
+    if (m_page == 4 && m_hotkeyField && m_store)
         m_store->setPushToTalkHotkey(m_hotkeyField->hotkey());
 
     if (m_page >= m_stack->count() - 1) {
+        saveLanguagesFromOnboarding();
         if (m_store) {
             if (m_modelCombo)
                 m_store->setSelectedModelId(m_modelCombo->currentData().toString());
@@ -375,12 +512,6 @@ void VaaniOnboardingWizard::goNext()
             m_store->save();
         }
         accept();
-        return;
-    }
-
-    if (m_page == 1 && !m_modelReady) {
-        m_downloadStatus->setObjectName(QStringLiteral("vaaniRefusalLabel"));
-        m_downloadStatus->setText(QStringLiteral("Download the speech models before continuing."));
         return;
     }
 

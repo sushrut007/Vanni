@@ -97,6 +97,8 @@ if(EXISTS "${VAANI_DEPS_DIR}/whisper.lib")
         "${VAANI_DEPS_DIR}/ggml.lib"
         "${VAANI_DEPS_DIR}/portaudio_x64.lib"
         psapi
+        ole32
+        oleaut32
     )
 else()
     message(FATAL_ERROR "Missing speech dependencies under ${VAANI_DEPS_DIR}")

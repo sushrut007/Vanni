@@ -12,6 +12,7 @@ class VaaniHotkeyCaptureField;
 class QCheckBox;
 class QComboBox;
 class QLabel;
+class QListWidget;
 class QProgressBar;
 class QPushButton;
 namespace Vaani {
@@ -50,6 +51,10 @@ private:
 
     VaaniCoreController* m_core = nullptr;
     QComboBox* m_languageCombo = nullptr;
+    QListWidget* m_primaryLangList = nullptr;
+    QComboBox* m_addLangCombo = nullptr;
+    QPushButton* m_addPrimaryBtn = nullptr;
+    QPushButton* m_removePrimaryBtn = nullptr;
     QComboBox* m_micCombo = nullptr;
     QComboBox* m_modelCombo = nullptr;
     QLabel* m_modelStatus = nullptr;

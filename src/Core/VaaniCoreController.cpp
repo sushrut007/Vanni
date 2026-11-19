@@ -54,10 +54,6 @@ VaaniCoreController::VaaniCoreController(QObject* parent)
     });
     connect(m_speechManager, &SpeechRecognitionManager::sessionFinished, this,
             &VaaniCoreController::onSessionFinished);
-    connect(m_speechManager, &SpeechRecognitionManager::speechActivityDetected, this, [this]() {
-        if (m_speechManager && m_speechManager->isRunning())
-            setDictationHudPhase(VaaniDictationHudPhase::Transcribing);
-    });
     connect(m_speechManager, &SpeechRecognitionManager::errorOccurred,
             this, &VaaniCoreController::onSpeechManagerError);
     connect(m_speechManager, &SpeechRecognitionManager::microphonePermissionDenied,
@@ -297,6 +293,7 @@ void VaaniCoreController::cancelExternalDictation()
     m_trayToggleSession = false;
     m_holdTailTimer->stop();
     m_speechManager->cancel();
+    setDictationHudPhase(VaaniDictationHudPhase::Hidden);
     updateTrayStatus();
     qInfo() << "[Vaani] External dictation cancelled";
 }
@@ -326,6 +323,9 @@ void VaaniCoreController::onHoldStarted()
 
 void VaaniCoreController::onHoldEnded()
 {
+    if (m_pttSessionActive || (m_speechManager && m_speechManager->isRunning())) {
+        setDictationHudPhase(VaaniDictationHudPhase::Transcribing);
+    }
     endExternalDictationWithTail();
 }
 
@@ -395,6 +395,7 @@ void VaaniCoreController::toggleTrayDictation()
 
     if (m_speechManager->isRunning()) {
         m_holdTailTimer->stop();
+        setDictationHudPhase(VaaniDictationHudPhase::Transcribing);
         m_speechManager->stop();
         m_pttSessionActive = false;
         m_trayToggleSession = false;
@@ -435,9 +436,6 @@ void VaaniCoreController::onRecognizerResult(const QString& text, bool isFinal,
 {
     if (owner != RecognitionOwner::FloatingBar && owner != RecognitionOwner::None)
         return;
-
-    if (m_speechManager && m_speechManager->isRunning() && !isFinal)
-        setDictationHudPhase(VaaniDictationHudPhase::Transcribing);
 
     emit recognitionResult(text, isFinal);
     const QString kind = isFinal ? QStringLiteral("final") : QStringLiteral("partial");

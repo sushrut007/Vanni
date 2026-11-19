@@ -107,8 +107,10 @@ std::optional<HoldUtteranceAssembler::Slice> HoldUtteranceAssembler::takeFinal()
 {
     std::optional<Slice> out;
     // R-1: the rest is sent whenever it holds speech, padded when it is short.
-    if (m_heardSpeech || SpeechSliceAssembler::holdsSpeech(m_buffer))
+    if (m_heardSpeech || SpeechSliceAssembler::holdsSpeech(m_buffer)
+        || m_buffer.size() > bytesFor(kLeadInMs)) {
         out = sliceOf(SpeechSliceAssembler::padToFinalLength(m_buffer));
+    }
     reset();
     return out;
 }

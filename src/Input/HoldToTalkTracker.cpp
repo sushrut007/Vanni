@@ -105,12 +105,6 @@ HoldToTalkTracker::Step HoldToTalkTracker::feed(bool fullyHeld, bool partiallyHe
                 m_arming = false;
             return step;
         }
-        if (partiallyHeld) {
-            m_state = State::Blocked;
-            m_arming = false;
-            step.event = Event::Cancelled;
-            return step;
-        }
         if (m_arming && nowMs - m_activeSince < kSettleMs) {
             m_arming = false;
             m_state = State::Toggle;
@@ -150,9 +144,14 @@ HoldToTalkTracker::Step HoldToTalkTracker::feed(bool fullyHeld, bool partiallyHe
             }
             return step;
         }
-        if (otherKeyDown || (partiallyHeld && !fullyHeld)) {
+        if (otherKeyDown) {
             m_stopPending = false;
             m_stopArmed = false;
+            return step;
+        }
+        if (!fullyHeld) {
+            if (!anyChord)
+                m_stopPending = false;
             return step;
         }
         if (pressed && nowMs - m_stopPressAt < kSettleMs)

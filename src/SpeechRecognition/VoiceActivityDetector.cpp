@@ -16,7 +16,7 @@ bool VoiceActivityDetector::detectSpeechInRange(const float* data, size_t count)
     }
     energy = std::sqrt(energy / static_cast<float>(count));
 
-    static constexpr float ADJUSTED_ENERGY_THRESHOLD = 0.01f;  // Increased from 0.001f
+    static constexpr float ADJUSTED_ENERGY_THRESHOLD = 0.002f;
 
     if (energy < ADJUSTED_ENERGY_THRESHOLD) return false;
 
@@ -28,8 +28,8 @@ bool VoiceActivityDetector::detectSpeechInRange(const float* data, size_t count)
     }
     float zcr = static_cast<float>(zeroCrossings) / static_cast<float>(count);
 
-    static constexpr float ADJUSTED_ZCR_MIN = 0.05f;  // Lowered from 0.1f
-    static constexpr float ADJUSTED_ZCR_MAX = 0.8f;   // Increased from 0.6f
+    static constexpr float ADJUSTED_ZCR_MIN = 0.005f;
+    static constexpr float ADJUSTED_ZCR_MAX = 0.85f;
 
     return zcr >= ADJUSTED_ZCR_MIN && zcr <= ADJUSTED_ZCR_MAX;
 }

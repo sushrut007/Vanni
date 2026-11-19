@@ -41,6 +41,7 @@ private slots:
 private:
     VaaniSettingsDialog* ensureSettingsDialog();
     QIcon trayIconForState(VaaniCoreController::TrayStatus status) const;
+    void buildMenu();
 
     SingleInstanceGuard* m_instanceGuard = nullptr;
 

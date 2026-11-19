@@ -21,6 +21,7 @@
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QLabel>
+#include <QListWidget>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QScrollArea>
@@ -155,12 +156,56 @@ void VaaniSettingsDialog::buildUi()
 
     {
         QFrame* section = addSection(tr("Recognition"), sections);
-        sectionBody(section)->addWidget(new QLabel(tr("Language"), this));
+
+        sectionBody(section)->addWidget(new QLabel(tr("Active Dictation Language"), this));
         m_languageCombo = new QComboBox(this);
-        const auto codes = LanguageUtils::supportedDictationLanguageCodes();
-        for (const QString& code : codes)
-            m_languageCombo->addItem(LanguageUtils::displayFromLanguageCode(code), code);
+        const auto allLanguages = LanguageUtils::allSupportedLanguagesSorted();
+        for (const auto& pair : allLanguages)
+            m_languageCombo->addItem(pair.first, pair.second);
         sectionBody(section)->addWidget(m_languageCombo);
+
+        sectionBody(section)->addWidget(new QLabel(tr("Primary Languages (quick switch in system tray menu)"), this));
+        m_primaryLangList = new QListWidget(this);
+        m_primaryLangList->setFixedHeight(105);
+        sectionBody(section)->addWidget(m_primaryLangList);
+
+        auto* addRow = new QHBoxLayout();
+        m_addLangCombo = new QComboBox(this);
+        for (const auto& pair : allLanguages)
+            m_addLangCombo->addItem(pair.first, pair.second);
+
+        m_addPrimaryBtn = new QPushButton(tr("Add to Primary"), this);
+        m_addPrimaryBtn->setObjectName(QStringLiteral("vaaniSecondaryButton"));
+        m_removePrimaryBtn = new QPushButton(tr("Remove"), this);
+        m_removePrimaryBtn->setObjectName(QStringLiteral("vaaniSecondaryButton"));
+
+        addRow->addWidget(m_addLangCombo, 1);
+        addRow->addWidget(m_addPrimaryBtn);
+        addRow->addWidget(m_removePrimaryBtn);
+        sectionBody(section)->addLayout(addRow);
+
+        connect(m_addPrimaryBtn, &QPushButton::clicked, this, [this]() {
+            if (!m_addLangCombo || !m_primaryLangList)
+                return;
+            const QString code = m_addLangCombo->currentData().toString();
+            const QString name = m_addLangCombo->currentText();
+            for (int i = 0; i < m_primaryLangList->count(); ++i) {
+                if (m_primaryLangList->item(i)->data(Qt::UserRole).toString() == code)
+                    return;
+            }
+            auto* item = new QListWidgetItem(name, m_primaryLangList);
+            item->setData(Qt::UserRole, code);
+        });
+
+        connect(m_removePrimaryBtn, &QPushButton::clicked, this, [this]() {
+            if (!m_primaryLangList)
+                return;
+            if (m_primaryLangList->count() <= 1)
+                return;
+            QListWidgetItem* item = m_primaryLangList->currentItem();
+            if (item)
+                delete item;
+        });
     }
 
     {
@@ -390,6 +435,12 @@ void VaaniSettingsDialog::reloadFromStore()
     if (langIndex >= 0)
         m_languageCombo->setCurrentIndex(langIndex);
 
+    m_primaryLangList->clear();
+    for (const QString& code : store->primaryLanguages()) {
+        auto* item = new QListWidgetItem(LanguageUtils::displayFromLanguageCode(code), m_primaryLangList);
+        item->setData(Qt::UserRole, code);
+    }
+
     const int micIndex = m_micCombo->findData(store->microphoneEndpointId());
     if (micIndex >= 0)
         m_micCombo->setCurrentIndex(micIndex);
@@ -448,6 +499,13 @@ void VaaniSettingsDialog::onSave()
     const QString previousModelId = store->selectedModelId();
 
     store->setDictationLanguageCode(m_languageCombo->currentData().toString());
+
+    QStringList primaryCodes;
+    for (int i = 0; i < m_primaryLangList->count(); ++i) {
+        primaryCodes.append(m_primaryLangList->item(i)->data(Qt::UserRole).toString());
+    }
+    if (!primaryCodes.isEmpty())
+        store->setPrimaryLanguages(primaryCodes);
     store->setMicrophoneEndpointId(m_micCombo->currentData().toString());
     store->setPushToTalkHotkey(m_pttCapture->hotkey());
     store->setDoubleTapToggleEnabled(m_doubleTapCheck->isChecked());

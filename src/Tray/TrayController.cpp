@@ -7,10 +7,12 @@
 #include "SpeechRecognition/speechrecognitionmanager.h"
 #include "UI/VaaniDictationCapturePanel.h"
 #include "UI/VaaniListeningPill.h"
+#include "Utils/LanguageUtils.h"
 #include "Utils/SingleInstanceGuard.h"
 #include "Utils/VaaniBrandIcon.h"
 
 #include <QAction>
+#include <QActionGroup>
 #include <QApplication>
 #include <QDebug>
 #include <QMenu>
@@ -28,23 +30,15 @@ TrayController::TrayController(VaaniCoreController* core, QObject* parent)
     m_tray->setIcon(trayIconForState(VaaniCoreController::TrayStatus::Loading));
     m_tray->setToolTip(QStringLiteral("Vaani — external dictation"));
 
-    m_statusAction = m_menu->addAction(QStringLiteral("Status: starting…"));
-    m_statusAction->setEnabled(false);
-
-    m_menu->addSeparator();
-    m_dictationAction = m_menu->addAction(QStringLiteral("Start dictation"));
-    connect(m_dictationAction, &QAction::triggered, this, &TrayController::toggleDictationFromTray);
-
-    QAction* settingsAction = m_menu->addAction(QStringLiteral("Open Settings"));
-    connect(settingsAction, &QAction::triggered, this, &TrayController::openSettings);
-
-    m_menu->addSeparator();
-    QAction* exitAction = m_menu->addAction(QStringLiteral("Exit"));
-    connect(exitAction, &QAction::triggered, this, &TrayController::exitApplication);
-
+    buildMenu();
     m_tray->setContextMenu(m_menu);
     connect(m_tray, &QSystemTrayIcon::activated,
             this, &TrayController::onTrayActivated);
+
+    connect(m_core->settings(), &VaaniSettingsStore::dictationLanguageChanged,
+            this, &TrayController::refreshMenu);
+    connect(m_core->settings(), &VaaniSettingsStore::primaryLanguagesChanged,
+            this, &TrayController::refreshMenu);
 
     connect(m_core, &VaaniCoreController::engineStateChanged,
             this, [this](VaaniCoreController::EngineState state, const QString& detail) {
@@ -73,7 +67,9 @@ TrayController::TrayController(VaaniCoreController* core, QObject* parent)
                 showUserError(message, 6000);
             });
     connect(m_core->textInjector(), &ExternalTextInjector::phraseNeedsCapture,
-            this, [this](const QString& text) { m_capturePanel->showPhrase(text); });
+            this, [this](const QString& text, const QString& reason) {
+                m_capturePanel->showPhrase(text, reason);
+            });
     connect(m_core, &VaaniCoreController::errorOccurred, this,
             [this](const QString& message) { showUserError(message); });
     connect(m_core, &VaaniCoreController::microphonePermissionDenied, this, [this]() {
@@ -181,18 +177,72 @@ void TrayController::onSecondInstanceActivate()
     openSettings();
 }
 
-void TrayController::refreshMenu()
+void TrayController::buildMenu()
 {
-    if (m_statusAction)
-        m_statusAction->setText(m_core->trayStatusText());
+    m_menu->clear();
+
+    m_statusAction = m_menu->addAction(m_core->trayStatusText());
+    m_statusAction->setEnabled(false);
+
+    m_menu->addSeparator();
 
     const bool ready = m_core->engineState() == VaaniCoreController::EngineState::Ready;
-    if (m_dictationAction) {
-        m_dictationAction->setEnabled(ready);
-        m_dictationAction->setText(m_core->isTrayDictationActive()
-            ? QStringLiteral("Stop dictation")
-            : QStringLiteral("Start dictation"));
+    m_dictationAction = m_menu->addAction(m_core->isTrayDictationActive()
+        ? QStringLiteral("Stop dictation")
+        : QStringLiteral("Start dictation"));
+    m_dictationAction->setEnabled(ready);
+    connect(m_dictationAction, &QAction::triggered, this, &TrayController::toggleDictationFromTray);
+
+    m_menu->addSeparator();
+
+    // Primary languages directly in context menu
+    const QString currentLang = m_core->settings()->dictationLanguageCode();
+    const QStringList primary = m_core->settings()->primaryLanguages();
+
+    auto* langGroup = new QActionGroup(m_menu);
+    langGroup->setExclusive(true);
+
+    for (const QString& code : primary) {
+        const QString name = LanguageUtils::displayFromLanguageCode(code);
+        QAction* act = m_menu->addAction(name);
+        act->setCheckable(true);
+        act->setChecked(code == currentLang);
+        langGroup->addAction(act);
+        connect(act, &QAction::triggered, this, [this, code]() {
+            m_core->settings()->setDictationLanguageCode(code);
+            m_core->settings()->save();
+        });
     }
+
+    // "More languages" submenu with all supported languages
+    QMenu* moreMenu = m_menu->addMenu(tr("More languages"));
+    const auto allLanguages = LanguageUtils::allSupportedLanguagesSorted();
+    for (const auto& pair : allLanguages) {
+        const QString& name = pair.first;
+        const QString& code = pair.second;
+        QAction* act = moreMenu->addAction(name);
+        act->setCheckable(true);
+        act->setChecked(code == currentLang);
+        connect(act, &QAction::triggered, this, [this, code]() {
+            m_core->settings()->setDictationLanguageCode(code);
+            m_core->settings()->save();
+        });
+    }
+
+    m_menu->addSeparator();
+
+    QAction* settingsAction = m_menu->addAction(QStringLiteral("Open Settings"));
+    connect(settingsAction, &QAction::triggered, this, &TrayController::openSettings);
+
+    m_menu->addSeparator();
+
+    QAction* exitAction = m_menu->addAction(QStringLiteral("Exit"));
+    connect(exitAction, &QAction::triggered, this, &TrayController::exitApplication);
+}
+
+void TrayController::refreshMenu()
+{
+    buildMenu();
 }
 
 void TrayController::onTrayActivated(QSystemTrayIcon::ActivationReason reason)

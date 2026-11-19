@@ -14,6 +14,8 @@
 
 #ifdef Q_OS_WIN
 #include <Windows.h>
+#include <ole2.h>
+#include <uiautomation.h>
 #endif
 
 namespace {
@@ -60,6 +62,108 @@ bool focusLooksLikePasswordField(HWND foreground)
         return false;
     const LONG_PTR style = GetWindowLongPtrW(gui.hwndFocus, GWL_STYLE);
     return (style & ES_PASSWORD) != 0;
+}
+
+bool isTextInputFocused(HWND foreground)
+{
+    if (!foreground)
+        return false;
+
+    // 1. Desktop wallpaper and shell taskbars do not accept dictation text input.
+    wchar_t className[256] = {0};
+    if (GetClassNameW(foreground, className, 255) > 0) {
+        if (_wcsicmp(className, L"Progman") == 0 ||
+            _wcsicmp(className, L"WorkerW") == 0 ||
+            _wcsicmp(className, L"Shell_TrayWnd") == 0 ||
+            _wcsicmp(className, L"Shell_SecondaryTrayWnd") == 0) {
+            return false;
+        }
+    }
+
+    // 2. Query GUIThreadInfo for active caret or known Win32 edit control.
+    GUITHREADINFO gti{};
+    gti.cbSize = sizeof(GUITHREADINFO);
+    const DWORD threadId = GetWindowThreadProcessId(foreground, nullptr);
+    if (GetGUIThreadInfo(threadId, &gti)) {
+        if (gti.hwndCaret != nullptr || (gti.flags & GUI_CARETBLINKING) != 0 ||
+            (gti.rcCaret.right > gti.rcCaret.left && gti.rcCaret.bottom > gti.rcCaret.top)) {
+            return true;
+        }
+
+        if (gti.hwndFocus != nullptr) {
+            wchar_t focusClass[256] = {0};
+            if (GetClassNameW(gti.hwndFocus, focusClass, 255) > 0) {
+                if (_wcsicmp(focusClass, L"Edit") == 0 ||
+                    _wcsicmp(focusClass, L"RichEdit") == 0 ||
+                    _wcsicmp(focusClass, L"RichEdit20A") == 0 ||
+                    _wcsicmp(focusClass, L"RichEdit20W") == 0 ||
+                    _wcsicmp(focusClass, L"RICHEDIT50W") == 0 ||
+                    _wcsicmp(focusClass, L"Scintilla") == 0 ||
+                    _wcsicmp(focusClass, L"ConsoleWindowClass") == 0 ||
+                    _wcsicmp(focusClass, L"Windows.UI.Input.InputSite.WindowClass") == 0) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    // 3. For modern apps (Chrome, Edge, Electron, Office, VS Code, WinUI), inspect via UI Automation.
+    bool uiaInputFocused = false;
+    HRESULT hrInit = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+    const bool coUninitNeeded = SUCCEEDED(hrInit);
+
+    IUIAutomation* pAutomation = nullptr;
+    HRESULT hr = CoCreateInstance(CLSID_CUIAutomation, nullptr, CLSCTX_INPROC_SERVER,
+                                  IID_IUIAutomation, reinterpret_cast<void**>(&pAutomation));
+    if (SUCCEEDED(hr) && pAutomation) {
+        IUIAutomationElement* pFocused = nullptr;
+        if (SUCCEEDED(pAutomation->GetFocusedElement(&pFocused)) && pFocused) {
+            CONTROLTYPEID typeId = 0;
+            pFocused->get_CurrentControlType(&typeId);
+
+            if (typeId == UIA_EditControlTypeId ||
+                typeId == UIA_DocumentControlTypeId ||
+                typeId == UIA_ComboBoxControlTypeId) {
+                IUnknown* pValPatternUnk = nullptr;
+                if (SUCCEEDED(pFocused->GetCurrentPattern(UIA_ValuePatternId, &pValPatternUnk)) && pValPatternUnk) {
+                    IUIAutomationValuePattern* pValPattern = nullptr;
+                    if (SUCCEEDED(pValPatternUnk->QueryInterface(IID_IUIAutomationValuePattern,
+                                                                 reinterpret_cast<void**>(&pValPattern))) && pValPattern) {
+                        BOOL isReadOnly = TRUE;
+                        if (SUCCEEDED(pValPattern->get_CurrentIsReadOnly(&isReadOnly)) && !isReadOnly) {
+                            uiaInputFocused = true;
+                        }
+                        pValPattern->Release();
+                    }
+                    pValPatternUnk->Release();
+                } else {
+                    uiaInputFocused = true;
+                }
+            } else {
+                IUnknown* pValPatternUnk = nullptr;
+                if (SUCCEEDED(pFocused->GetCurrentPattern(UIA_ValuePatternId, &pValPatternUnk)) && pValPatternUnk) {
+                    IUIAutomationValuePattern* pValPattern = nullptr;
+                    if (SUCCEEDED(pValPatternUnk->QueryInterface(IID_IUIAutomationValuePattern,
+                                                                 reinterpret_cast<void**>(&pValPattern))) && pValPattern) {
+                        BOOL isReadOnly = TRUE;
+                        if (SUCCEEDED(pValPattern->get_CurrentIsReadOnly(&isReadOnly)) && !isReadOnly) {
+                            uiaInputFocused = true;
+                        }
+                        pValPattern->Release();
+                    }
+                    pValPatternUnk->Release();
+                }
+            }
+            pFocused->Release();
+        }
+        pAutomation->Release();
+    }
+
+    if (coUninitNeeded) {
+        CoUninitialize();
+    }
+
+    return uiaInputFocused;
 }
 
 INPUT keyEvent(WORD vk, bool keyUp, bool extended = false)
@@ -221,6 +325,14 @@ void ExternalTextInjector::processNextPhrase()
         scheduleRestore();
         return;
     }
+
+    if (!isTextInputFocused(foreground)) {
+        offerPhraseForManualCopy(phrase, VaaniTypingTarget::BlockReason::NoInputFocused);
+        m_pendingPhrases.clear();
+        m_processing = false;
+        scheduleRestore();
+        return;
+    }
 #endif
 
     bool ok = injectViaClipboard(injectText);
@@ -230,7 +342,7 @@ void ExternalTextInjector::processNextPhrase()
     }
 
     if (!ok) {
-        offerPhraseForManualCopy(phrase, VaaniTypingTarget::BlockReason::None);
+        offerPhraseForManualCopy(phrase, VaaniTypingTarget::BlockReason::NoInputFocused);
         m_pendingPhrases.clear();
         m_processing = false;
         scheduleRestore();
@@ -351,8 +463,9 @@ bool ExternalTextInjector::offerPhraseForManualCopy(const QString& phrase,
     if (QClipboard* clipboard = QGuiApplication::clipboard())
         clipboard->setText(trimmed, QClipboard::Clipboard);
 
-    emit phraseNeedsCapture(trimmed);
-    qInfo() << "[Vaani] Paste blocked (" << VaaniTypingTarget::blockReasonMessage(reason)
+    const QString reasonMsg = VaaniTypingTarget::blockReasonMessage(reason);
+    emit phraseNeedsCapture(trimmed, reasonMsg);
+    qInfo() << "[Vaani] Paste blocked (" << reasonMsg
             << ") — copied to clipboard and showing capture panel.";
     return true;
 }

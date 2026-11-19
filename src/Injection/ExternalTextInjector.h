@@ -27,7 +27,7 @@ public:
 
 signals:
     void injectionFailed(const QString& userMessage);
-    void phraseNeedsCapture(const QString& text);
+    void phraseNeedsCapture(const QString& text, const QString& reason = QString());
 
 private slots:
     void processNextPhrase();
