@@ -29,9 +29,9 @@ Vaani::UiTheme themeFromStorage(const QString& name)
 {
     if (name.compare(QStringLiteral("Light"), Qt::CaseInsensitive) == 0)
         return Vaani::UiTheme::Light;
-    if (name.compare(QStringLiteral("Dark"), Qt::CaseInsensitive) == 0)
-        return Vaani::UiTheme::Dark;
-    return Vaani::UiTheme::System;
+    if (name.compare(QStringLiteral("System"), Qt::CaseInsensitive) == 0)
+        return Vaani::UiTheme::System;
+    return Vaani::UiTheme::Dark;
 }
 
 QString themeToStorage(Vaani::UiTheme theme)
@@ -317,7 +317,7 @@ void VaaniSettingsStore::load()
     settings.endGroup();
 
     settings.beginGroup(QString::fromLatin1(kUiGroup));
-    m_uiTheme = themeFromStorage(settings.value(QLatin1String(kThemeKey)).toString());
+    m_uiTheme = themeFromStorage(settings.value(QLatin1String(kThemeKey), QStringLiteral("Dark")).toString());
     m_listeningIndicator = indicatorFromStorage(
         settings.value(QLatin1String(kListeningIndicatorKey)).toString());
     settings.endGroup();

@@ -5,12 +5,14 @@
 #include "Input/GlobalPushToTalkMonitor.h"
 #include "Input/HoldReleaseTail.h"
 #include "Settings/VaaniSettingsStore.h"
+#include "Storage/VaaniHistoryStore.h"
 #include "SpeechRecognition/speechrecognitionmanager.h"
 #include "Utils/VaaniColdStart.h"
 #include "Tray/TrayController.h"
 #include "Utils/SingleInstanceGuard.h"
 #include "Models/VaaniModelDownloader.h"
 #include "UI/VaaniOnboardingWizard.h"
+#include "Utils/VaaniAutoStartManager.h"
 #include "Utils/WhisperModelPaths.h"
 
 #include <QCoreApplication>
@@ -23,6 +25,7 @@ VaaniCoreController::VaaniCoreController(QObject* parent)
     : QObject(parent)
     , m_speechManager(new SpeechRecognitionManager(this))
     , m_settings(new VaaniSettingsStore(this))
+    , m_historyStore(new VaaniHistoryStore(this))
     , m_textInjector(new ExternalTextInjector(this))
     , m_holdMonitor(new GlobalPushToTalkMonitor(this))
     , m_holdTailTimer(new QTimer(this))
@@ -116,6 +119,9 @@ void VaaniCoreController::runStartupFlow()
     const bool showSetup = !installed || !m_settings->onboardingCompleted();
 
     if (showSetup) {
+        if (Vaani::AutoStartManager::isSupported())
+            Vaani::AutoStartManager::setEnabled(true);
+
         VaaniOnboardingWizard wizard(this);
         wizard.setWindowModality(Qt::ApplicationModal);
         if (wizard.exec() != QDialog::Accepted) {
@@ -129,6 +135,8 @@ void VaaniCoreController::runStartupFlow()
     }
 
     startEngineLoad();
+    if (m_trayPresenter)
+        m_trayPresenter->openHome();
 }
 
 void VaaniCoreController::attachSingleInstanceGuard(SingleInstanceGuard* guard)
@@ -455,6 +463,7 @@ void VaaniCoreController::onRecognizerResult(const QString& text, bool isFinal,
         m_partialInjectTimer->stop();
         m_pendingPartialInject.clear();
         m_lastInjectedPartial.clear();
+        m_historyStore->addItem(text.trimmed(), m_settings->dictationLanguageCode());
         m_textInjector->enqueueFinalPhrase(text);
         return;
     }

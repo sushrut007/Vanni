@@ -6,6 +6,7 @@
 #include "Settings/VaaniSettingsStore.h"
 #include "SpeechRecognition/speechrecognitionmanager.h"
 #include "UI/VaaniDictationCapturePanel.h"
+#include "UI/VaaniHomeWindow.h"
 #include "UI/VaaniListeningPill.h"
 #include "Utils/LanguageUtils.h"
 #include "Utils/SingleInstanceGuard.h"
@@ -85,6 +86,7 @@ TrayController::TrayController(VaaniCoreController* core, QObject* parent)
 
 TrayController::~TrayController()
 {
+    delete m_homeWindow;
     delete m_capturePanel;
     delete m_listeningPill;
 }
@@ -143,43 +145,54 @@ void TrayController::refreshDictationHud()
 void TrayController::setInstanceGuard(SingleInstanceGuard* guard)
 {
     m_instanceGuard = guard;
+    if (m_homeWindow)
+        m_instanceGuard->setMainWindow(m_homeWindow);
 }
 
-VaaniSettingsDialog* TrayController::ensureSettingsDialog()
+VaaniHomeWindow* TrayController::ensureHomeWindow()
 {
-    if (!m_settings) {
-        m_settings = new VaaniSettingsDialog(m_core);
+    if (!m_homeWindow) {
+        m_homeWindow = new VaaniHomeWindow(m_core);
         if (m_instanceGuard)
-            m_instanceGuard->setMainWindow(m_settings);
+            m_instanceGuard->setMainWindow(m_homeWindow);
     }
-    return m_settings;
+    return m_homeWindow;
+}
+
+void TrayController::openHome()
+{
+    VaaniHomeWindow* home = ensureHomeWindow();
+    home->showHomePage();
+    home->show();
+    home->raise();
+    home->activateWindow();
 }
 
 void TrayController::openSettings()
 {
-    VaaniSettingsDialog* dialog = ensureSettingsDialog();
-    dialog->reloadFromStore();
-    dialog->applyThemeFromStore();
-    dialog->show();
-    dialog->raise();
-    dialog->activateWindow();
+    VaaniHomeWindow* home = ensureHomeWindow();
+    home->showSettingsPage();
+    home->show();
+    home->raise();
+    home->activateWindow();
 }
 
 void TrayController::onSecondInstanceActivate()
 {
-    if (m_settings && m_settings->isVisible()) {
-        m_tray->showMessage(QStringLiteral("Vaani"),
-                            QStringLiteral("Vaani is already running."),
-                            QSystemTrayIcon::Information, 4000);
-        openSettings();
-        return;
-    }
-    openSettings();
+    openHome();
 }
 
 void TrayController::buildMenu()
 {
     m_menu->clear();
+
+    QAction* openHomeAction = m_menu->addAction(QStringLiteral("Open Vaani"));
+    QFont boldFont = openHomeAction->font();
+    boldFont.setBold(true);
+    openHomeAction->setFont(boldFont);
+    connect(openHomeAction, &QAction::triggered, this, &TrayController::openHome);
+
+    m_menu->addSeparator();
 
     m_statusAction = m_menu->addAction(m_core->trayStatusText());
     m_statusAction->setEnabled(false);
@@ -247,8 +260,8 @@ void TrayController::refreshMenu()
 
 void TrayController::onTrayActivated(QSystemTrayIcon::ActivationReason reason)
 {
-    if (reason == QSystemTrayIcon::DoubleClick)
-        openSettings();
+    if (reason == QSystemTrayIcon::DoubleClick || reason == QSystemTrayIcon::Trigger)
+        openHome();
 }
 
 void TrayController::toggleDictationFromTray()
@@ -264,6 +277,8 @@ void TrayController::exitApplication()
         m_listeningPill->setPhase(VaaniDictationHudPhase::Hidden);
     if (m_capturePanel)
         m_capturePanel->hide();
+    if (m_homeWindow)
+        m_homeWindow->hide();
     m_tray->hide();
     m_core->prepareForQuit();
     QApplication::exit(0);

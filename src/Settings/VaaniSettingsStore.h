@@ -82,6 +82,6 @@ private:
     QString m_modelId = QStringLiteral("base-q8");
     bool m_onboardingCompleted = false;
     bool m_onboardingSkipped = false;
-    Vaani::UiTheme m_uiTheme = Vaani::UiTheme::System;
+    Vaani::UiTheme m_uiTheme = Vaani::UiTheme::Dark;
     ListeningIndicator m_listeningIndicator = ListeningIndicator::StatusPill;
 };

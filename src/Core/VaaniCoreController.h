@@ -12,6 +12,7 @@ class ExternalTextInjector;
 class GlobalPushToTalkMonitor;
 class TrayController;
 class SingleInstanceGuard;
+class VaaniHistoryStore;
 class QThread;
 class QTimer;
 
@@ -65,6 +66,7 @@ public:
     SpeechRecognitionManager* speechManager() const { return m_speechManager; }
     VaaniSettingsStore* settings() const { return m_settings; }
     ExternalTextInjector* textInjector() const { return m_textInjector; }
+    VaaniHistoryStore* historyStore() const { return m_historyStore; }
 
 signals:
     void engineStateChanged(VaaniCoreController::EngineState state, const QString& detail);
@@ -117,6 +119,7 @@ private:
     QTimer* m_partialInjectTimer = nullptr;
     VaaniSettingsStore* m_settings = nullptr;
     ExternalTextInjector* m_textInjector = nullptr;
+    VaaniHistoryStore* m_historyStore = nullptr;
     TrayController* m_trayPresenter = nullptr;
     QThread* m_loadThread = nullptr;
     QString m_modelsDirectory;

@@ -4,5 +4,17 @@
     </qresource>
     <qresource prefix="/icons">
         <file alias="vaani-logo.png">icons/vaani-logo.png</file>
+        <file alias="mic.png">icons/mic.png</file>
+        <file alias="keyboard.png">icons/keyboard.png</file>
+        <file alias="globe.png">icons/globe.png</file>
+        <file alias="cpu.png">icons/cpu.png</file>
+        <file alias="search.png">icons/search.png</file>
+        <file alias="copy.png">icons/copy.png</file>
+        <file alias="trash.png">icons/trash.png</file>
+        <file alias="export.png">icons/export.png</file>
+        <file alias="settings.png">icons/settings.png</file>
+        <file alias="empty_history.png">icons/empty_history.png</file>
+        <file alias="chevron_down.png">icons/chevron_down.png</file>
+        <file alias="chevron_down_light.png">icons/chevron_down_light.png</file>
     </qresource>
 </RCC>

@@ -8,6 +8,7 @@
 #include "Settings/VaaniHotkeyCaptureField.h"
 #include "Settings/VaaniSettingsStore.h"
 #include "Settings/VaaniSettingsStyle.h"
+#include "UI/VaaniToggleSwitch.h"
 #include "Utils/LanguageUtils.h"
 #include "Utils/VaaniAutoStartManager.h"
 #include "Utils/VaaniBrandIcon.h"
@@ -41,14 +42,10 @@ QVBoxLayout* sectionBody(QFrame* section)
 } // namespace
 
 VaaniSettingsDialog::VaaniSettingsDialog(VaaniCoreController* core, QWidget* parent)
-    : QDialog(parent, Qt::Window)
+    : QWidget(parent)
     , m_core(core)
 {
     setObjectName(QStringLiteral("VaaniSettingsRoot"));
-    setWindowTitle(tr("Vaani Settings"));
-    setAttribute(Qt::WA_QuitOnClose, false);
-    setMinimumSize(500, 540);
-    resize(520, 600);
 
     m_modelDownloader = new Vaani::VaaniModelDownloader(this);
     connect(m_modelDownloader, &Vaani::VaaniModelDownloader::statusChanged, this,
@@ -84,27 +81,18 @@ VaaniSettingsDialog::VaaniSettingsDialog(VaaniCoreController* core, QWidget* par
 void VaaniSettingsDialog::buildUi()
 {
     auto* root = new QVBoxLayout(this);
-    root->setContentsMargins(20, 18, 20, 16);
+    root->setContentsMargins(0, 0, 0, 0);
     root->setSpacing(12);
 
-    auto* header = new QHBoxLayout();
-    header->setSpacing(12);
-    auto* logo = new QLabel(this);
-    logo->setPixmap(Vaani::brandPixmap(40));
-    header->addWidget(logo);
-    auto* titleCol = new QVBoxLayout();
-    titleCol->setSpacing(2);
-    auto* title = new QLabel(QStringLiteral("Vaani"), this);
-    title->setObjectName(QStringLiteral("vaaniSettingsTitle"));
+    auto* heading = new QLabel(tr("Settings"), this);
+    heading->setObjectName(QStringLiteral("vaaniSettingsTitle"));
     auto* subtitle = new QLabel(
-        tr("External dictation — Vaani keeps running in the tray when you close this window."),
+        tr("Configure speech model, audio device, primary languages, hotkey, and dictation behavior."),
         this);
     subtitle->setObjectName(QStringLiteral("vaaniSettingsSubtitle"));
     subtitle->setWordWrap(true);
-    titleCol->addWidget(title);
-    titleCol->addWidget(subtitle);
-    header->addLayout(titleCol, 1);
-    root->addLayout(header);
+    root->addWidget(heading);
+    root->addWidget(subtitle);
 
     auto* scroll = new QScrollArea(this);
     scroll->setObjectName(QStringLiteral("VaaniSettingsScroll"));
@@ -218,7 +206,7 @@ void VaaniSettingsDialog::buildUi()
         sectionBody(section)->addWidget(m_pttCapture);
         sectionBody(section)->addWidget(m_pttRefusal);
 
-        m_doubleTapCheck = new QCheckBox(tr("Double-tap hotkey for hands-free listening"), this);
+        m_doubleTapCheck = new VaaniToggleSwitch(tr("Double-tap hotkey for hands-free listening"), this);
         sectionBody(section)->addWidget(m_doubleTapCheck);
 
         connect(m_pttCapture, &VaaniHotkeyCaptureField::captureBegan, this, [this]() {
@@ -238,7 +226,7 @@ void VaaniSettingsDialog::buildUi()
 
     {
         QFrame* section = addSection(tr("Injection"), sections);
-        m_keystrokeFallbackCheck = new QCheckBox(tr("Type text if clipboard paste fails"), this);
+        m_keystrokeFallbackCheck = new VaaniToggleSwitch(tr("Type text if clipboard paste fails"), this);
         auto* hint = new QLabel(
             tr("Final phrases are pasted with Ctrl+V into the focused application."),
             this);
@@ -246,7 +234,7 @@ void VaaniSettingsDialog::buildUi()
         hint->setWordWrap(true);
         sectionBody(section)->addWidget(hint);
         sectionBody(section)->addWidget(m_keystrokeFallbackCheck);
-        m_injectPartialsCheck = new QCheckBox(
+        m_injectPartialsCheck = new VaaniToggleSwitch(
             tr("Inject partial results (debounced; experimental)"), this);
         sectionBody(section)->addWidget(m_injectPartialsCheck);
     }
@@ -281,7 +269,7 @@ void VaaniSettingsDialog::buildUi()
 
     {
         QFrame* section = addSection(tr("Startup"), sections);
-        m_autoStartCheck = new QCheckBox(tr("Start Vaani when Windows signs in"), this);
+        m_autoStartCheck = new VaaniToggleSwitch(tr("Start Vaani when Windows signs in"), this);
         m_autoStartCheck->setEnabled(Vaani::AutoStartManager::isSupported());
         sectionBody(section)->addWidget(m_autoStartCheck);
     }
@@ -292,13 +280,13 @@ void VaaniSettingsDialog::buildUi()
 
     auto* buttons = new QHBoxLayout();
     buttons->addStretch();
-    auto* closeBtn = new QPushButton(tr("Close"), this);
-    closeBtn->setObjectName(QStringLiteral("vaaniSecondaryButton"));
-    connect(closeBtn, &QPushButton::clicked, this, [this]() { hide(); });
-    auto* saveBtn = new QPushButton(tr("Save"), this);
+    auto* backBtn = new QPushButton(tr("Back to Dictations"), this);
+    backBtn->setObjectName(QStringLiteral("vaaniSecondaryButton"));
+    connect(backBtn, &QPushButton::clicked, this, &VaaniSettingsDialog::backRequested);
+    auto* saveBtn = new QPushButton(tr("Save Settings"), this);
     saveBtn->setObjectName(QStringLiteral("vaaniPrimaryButton"));
     connect(saveBtn, &QPushButton::clicked, this, &VaaniSettingsDialog::onSave);
-    buttons->addWidget(closeBtn);
+    buttons->addWidget(backBtn);
     buttons->addWidget(saveBtn);
     root->addLayout(buttons);
 }
@@ -450,7 +438,12 @@ void VaaniSettingsDialog::reloadFromStore()
     m_keystrokeFallbackCheck->setChecked(store->keystrokeFallbackOnPasteFailure());
     if (m_injectPartialsCheck)
         m_injectPartialsCheck->setChecked(store->injectPartialResults());
-    m_autoStartCheck->setChecked(Vaani::AutoStartManager::isEnabled());
+    if (Vaani::AutoStartManager::isSupported()) {
+        if (!store->onboardingCompleted() && !Vaani::AutoStartManager::isEnabled()) {
+            Vaani::AutoStartManager::setEnabled(true);
+        }
+        m_autoStartCheck->setChecked(Vaani::AutoStartManager::isEnabled());
+    }
 
     const int listenIndex =
         m_listeningCombo->findData(static_cast<int>(store->listeningIndicator()));
@@ -473,7 +466,7 @@ void VaaniSettingsDialog::onThemeComboChanged(int index)
 {
     Q_UNUSED(index);
     const auto theme = static_cast<Vaani::UiTheme>(m_themeCombo->currentData().toInt());
-    Vaani::applySettingsStyle(this, theme);
+    m_core->settings()->setUiTheme(theme);
 }
 
 void VaaniSettingsDialog::onHotkeyRefused(const QString& reason)
@@ -535,20 +528,19 @@ void VaaniSettingsDialog::onSave()
         m_core->reloadSpeechEngine();
     }
 
-    hide();
-}
-
-void VaaniSettingsDialog::closeEvent(QCloseEvent* event)
-{
-    event->ignore();
-    if (m_pttCapture && m_pttCapture->isCapturing())
-        m_pttCapture->cancelCapture();
-    hide();
+    emit settingsSaved();
+    auto* btn = qobject_cast<QPushButton*>(sender());
+    if (btn) {
+        btn->setText(tr("✓ Settings Saved!"));
+        QTimer::singleShot(1500, btn, [btn]() {
+            btn->setText(tr("Save Settings"));
+        });
+    }
 }
 
 void VaaniSettingsDialog::changeEvent(QEvent* event)
 {
-    QDialog::changeEvent(event);
+    QWidget::changeEvent(event);
     if (event->type() == QEvent::LanguageChange && m_pttCapture)
         m_pttCapture->cancelCapture();
 }

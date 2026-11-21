@@ -7,6 +7,7 @@
 
 class QAction;
 class QMenu;
+class VaaniHomeWindow;
 class VaaniSettingsDialog;
 class VaaniListeningPill;
 class VaaniDictationCapturePanel;
@@ -23,6 +24,7 @@ public:
     ~TrayController() override;
 
     void show();
+    void openHome();
     void openSettings();
     void onSecondInstanceActivate();
     void showUserError(const QString& message, int timeoutMs = 8000);
@@ -39,14 +41,14 @@ private slots:
     void onRecognitionResult(const QString& text, bool isFinal);
 
 private:
-    VaaniSettingsDialog* ensureSettingsDialog();
+    VaaniHomeWindow* ensureHomeWindow();
     QIcon trayIconForState(VaaniCoreController::TrayStatus status) const;
     void buildMenu();
 
     SingleInstanceGuard* m_instanceGuard = nullptr;
 
     VaaniCoreController* m_core = nullptr;
-    VaaniSettingsDialog* m_settings = nullptr;
+    VaaniHomeWindow* m_homeWindow = nullptr;
     QSystemTrayIcon* m_tray = nullptr;
     QMenu* m_menu = nullptr;
     QAction* m_statusAction = nullptr;

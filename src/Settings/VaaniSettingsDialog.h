@@ -2,14 +2,14 @@
 
 #include "Input/VaaniHotkey.h"
 
-#include <QDialog>
+#include <QWidget>
 
 class QFrame;
 class QVBoxLayout;
 
 class VaaniCoreController;
 class VaaniHotkeyCaptureField;
-class QCheckBox;
+class VaaniToggleSwitch;
 class QComboBox;
 class QLabel;
 class QListWidget;
@@ -19,7 +19,7 @@ namespace Vaani {
 class VaaniModelDownloader;
 }
 
-class VaaniSettingsDialog : public QDialog
+class VaaniSettingsDialog : public QWidget
 {
     Q_OBJECT
 
@@ -29,8 +29,11 @@ public:
     void reloadFromStore();
     void applyThemeFromStore();
 
+signals:
+    void backRequested();
+    void settingsSaved();
+
 protected:
-    void closeEvent(QCloseEvent* event) override;
     void changeEvent(QEvent* event) override;
 
 private slots:
@@ -63,10 +66,10 @@ private:
     Vaani::VaaniModelDownloader* m_modelDownloader = nullptr;
     VaaniHotkeyCaptureField* m_pttCapture = nullptr;
     QLabel* m_pttRefusal = nullptr;
-    QCheckBox* m_doubleTapCheck = nullptr;
-    QCheckBox* m_keystrokeFallbackCheck = nullptr;
-    QCheckBox* m_injectPartialsCheck = nullptr;
-    QCheckBox* m_autoStartCheck = nullptr;
+    VaaniToggleSwitch* m_doubleTapCheck = nullptr;
+    VaaniToggleSwitch* m_keystrokeFallbackCheck = nullptr;
+    VaaniToggleSwitch* m_injectPartialsCheck = nullptr;
+    VaaniToggleSwitch* m_autoStartCheck = nullptr;
     QComboBox* m_listeningCombo = nullptr;
     QComboBox* m_themeCombo = nullptr;
 };

@@ -56,6 +56,9 @@ set(VAANI_SPEECH_SOURCES
     src/UI/VaaniListeningPill.cpp
     src/UI/VaaniDictationCapturePanel.cpp
     src/UI/VaaniOnboardingWizard.cpp
+    src/UI/VaaniHomeWindow.cpp
+    src/UI/VaaniToggleSwitch.cpp
+    src/Storage/VaaniHistoryStore.cpp
     src/Utils/VaaniAutoStartManager.cpp
     src/Core/VaaniCoreController.cpp
     src/Tray/TrayController.cpp
