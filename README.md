@@ -35,3 +35,7 @@ Replace `resources/vaani_app_icon.png` and `resources/icons/vaani-logo.png`, the
 ## Out of scope
 
 In-editor UI, licensing, voice commands, vocabulary training, bundled models in git.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
