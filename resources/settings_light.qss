@@ -1,0 +1,424 @@
+/* Vaani — light theme (settings + onboarding + main home) */
+QDialog#VaaniSettingsRoot,
+QWidget#VaaniSettingsRoot,
+QWidget#VaaniHomeRoot,
+QWidget#VaaniOnboardingRoot {
+    background-color: #f4f5f7;
+    color: #1a1d21;
+    font-family: "Segoe UI", sans-serif;
+    font-size: 13px;
+}
+
+QLabel#vaaniSettingsTitle,
+QLabel#vaaniOnboardingTitle {
+    font-size: 20px;
+    font-weight: 600;
+    color: #111318;
+}
+
+QLabel#vaaniSettingsSubtitle,
+QLabel#vaaniOnboardingSubtitle,
+QLabel#vaaniStepIndicator,
+QLabel.vaaniSettingsHint,
+QLabel.vaaniOnboardingBody {
+    color: #5c6470;
+    font-size: 12px;
+}
+
+QFrame.vaaniSettingsSection {
+    background-color: #ffffff;
+    border: 1px solid #e2e5ea;
+    border-radius: 10px;
+}
+
+QLabel.vaaniSectionTitle {
+    font-size: 12px;
+    font-weight: 600;
+    color: #3d434d;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+QComboBox {
+    background-color: #ffffff;
+    border: 1px solid #cfd4dc;
+    border-radius: 8px;
+    padding: 6px 12px;
+    padding-right: 32px;
+    color: #0f172a;
+    font-size: 13px;
+    min-height: 22px;
+}
+
+QComboBox:hover {
+    background-color: #f8fafc;
+    border-color: #94a3b8;
+}
+
+QComboBox:focus, QComboBox:on {
+    background-color: #ffffff;
+    border-color: #2563eb;
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 28px;
+    border-left: none;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+QComboBox::down-arrow {
+    image: url(:/icons/chevron_down_light.png);
+    width: 12px;
+    height: 12px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #ffffff;
+    border: 1px solid #cfd4dc;
+    border-radius: 8px;
+    padding: 4px;
+    color: #0f172a;
+    selection-background-color: #e2e8f0;
+    selection-color: #0f172a;
+    outline: none;
+}
+
+QComboBox QAbstractItemView::item {
+    min-height: 28px;
+    padding: 4px 10px;
+    border-radius: 5px;
+    color: #1e293b;
+}
+
+QComboBox QAbstractItemView::item:hover,
+QComboBox QAbstractItemView::item:selected {
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
+
+QLineEdit, #vaaniHotkeyCapture {
+    background-color: #ffffff;
+    border: 1px solid #cfd4dc;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #0f172a;
+    min-height: 20px;
+}
+
+QLineEdit:hover, #vaaniHotkeyCapture:hover {
+    border-color: #94a3b8;
+}
+
+QLineEdit:focus, #vaaniHotkeyCapture:focus {
+    border-color: #2563eb;
+}
+
+#vaaniHotkeyCapture[capturing="true"] {
+    border-color: #2563eb;
+    background-color: #eef4ff;
+}
+
+QCheckBox {
+    spacing: 8px;
+}
+
+QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 1px solid #b8c0cc;
+    background: #fff;
+}
+
+QCheckBox::indicator:checked {
+    background: #3b6fd9;
+    border-color: #3b6fd9;
+}
+
+QLabel#vaaniRefusalLabel {
+    color: #b42318;
+    font-size: 12px;
+}
+
+QPushButton#vaaniPrimaryButton {
+    background-color: #3b6fd9;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 22px;
+    font-weight: 600;
+}
+
+QPushButton#vaaniPrimaryButton:hover {
+    background-color: #2f5bb5;
+}
+
+QPushButton#vaaniSecondaryButton {
+    background-color: transparent;
+    color: #3d434d;
+    border: 1px solid #cfd4dc;
+    border-radius: 8px;
+    padding: 9px 16px;
+}
+
+QPushButton#vaaniSecondaryButton:hover {
+    background-color: #eef0f3;
+}
+
+QLabel#vaaniOnboardingPageTitle {
+    font-size: 17px;
+    font-weight: 600;
+    color: #111318;
+}
+
+QFrame#vaaniOnboardingCard {
+    background-color: #ffffff;
+    border: 1px solid #e2e5ea;
+    border-radius: 12px;
+}
+
+QProgressBar {
+    background-color: #e8ebf0;
+    border: none;
+    border-radius: 6px;
+    min-height: 10px;
+    text-align: center;
+    color: #5c6470;
+    font-size: 11px;
+}
+
+QProgressBar::chunk {
+    background-color: #3b6fd9;
+    border-radius: 6px;
+}
+
+QScrollArea#VaaniSettingsScroll,
+QWidget#VaaniSettingsContent {
+    background: transparent;
+    border: none;
+}
+
+QScrollBar:vertical {
+    width: 10px;
+    margin: 0;
+    background: transparent;
+}
+
+QScrollBar::handle:vertical {
+    background: #c5cad3;
+    border-radius: 5px;
+    min-height: 24px;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+}
+
+/* Home & Navigation Tabs */
+QFrame#vaaniNavTabs {
+    background-color: #e5e7eb;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 2px;
+}
+
+QPushButton.vaaniNavTab {
+    background-color: transparent;
+    color: #4b5563;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+QPushButton.vaaniNavTab:hover {
+    color: #111827;
+    background-color: #d1d5db;
+}
+
+QPushButton.vaaniNavTab[active="true"] {
+    background-color: #ffffff;
+    color: #111827;
+    font-weight: 600;
+}
+
+QFrame#vaaniStatusPill {
+    background-color: #ffffff;
+    border: 1px solid #e2e5ea;
+    border-radius: 12px;
+    padding: 3px 10px;
+}
+
+QLabel#vaaniStatusText {
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+}
+
+QLabel#heroHotkeyDisplay {
+    background-color: #ffffff;
+    border: 1px solid #cfd4dc;
+    border-radius: 8px;
+    padding: 6px 14px;
+    color: #2563eb;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+QFrame.vaaniInfoBadge {
+    background-color: #ffffff;
+    border: 1px solid #e2e5ea;
+    border-radius: 8px;
+    padding: 5px 10px;
+    color: #4b5563;
+    font-size: 12px;
+}
+
+QFrame#langBadgeFrame {
+    background-color: #ffffff;
+    border: 1px solid #e2e5ea;
+    border-radius: 8px;
+    padding: 2px 6px;
+}
+
+QComboBox#heroLangCombo {
+    background-color: transparent;
+    border: none;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 2px 4px;
+    padding-right: 22px;
+}
+
+QComboBox#heroLangCombo::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 18px;
+    border: none;
+}
+
+QComboBox#heroLangCombo::down-arrow {
+    image: url(:/icons/chevron_down_light.png);
+    width: 10px;
+    height: 10px;
+}
+
+QFrame.vaaniHistoryCard {
+    background-color: #ffffff;
+    border: 1px solid #e2e5ea;
+    border-radius: 10px;
+}
+
+QFrame.vaaniHistoryCard:hover {
+    border-color: #cfd4dc;
+    background-color: #f9fafb;
+}
+
+QLabel#cardTime {
+    color: #6b7280;
+    font-size: 11px;
+}
+
+QLabel#cardLangBadge {
+    background-color: #eff6ff;
+    color: #2563eb;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 4px;
+    padding: 1px 5px;
+}
+
+QLabel#cardWords {
+    color: #9ca3af;
+    font-size: 11px;
+}
+
+QPushButton#cardCopyBtn {
+    background-color: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 5px;
+    padding: 3px 8px;
+    color: #374151;
+    font-size: 11px;
+}
+
+QPushButton#cardCopyBtn:hover {
+    background-color: #e5e7eb;
+    color: #111827;
+}
+
+QPushButton#cardDeleteBtn {
+    background-color: transparent;
+    border: none;
+    color: #9ca3af;
+    font-size: 12px;
+    padding: 2px 6px;
+}
+
+QPushButton#cardDeleteBtn:hover {
+    color: #ef4444;
+}
+
+QLabel#cardText {
+    color: #1f2937;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+QLabel#emptyStateIcon {
+    font-size: 36px;
+}
+
+QLabel#emptyStateTitle {
+    font-size: 15px;
+    font-weight: 600;
+    color: #374151;
+}
+
+QLabel#emptyStateSubtitle {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+/* QMessageBox — light dialog */
+QMessageBox {
+    background-color: #ffffff;
+    color: #0f172a;
+}
+
+QMessageBox QLabel {
+    color: #0f172a;
+    background-color: transparent;
+    font-size: 13px;
+}
+
+QMessageBox QPushButton {
+    background-color: #f1f5f9;
+    border: 1px solid #cfd4dc;
+    border-radius: 6px;
+    padding: 6px 18px;
+    color: #0f172a;
+    font-size: 12px;
+    min-width: 60px;
+}
+
+QMessageBox QPushButton:hover {
+    background-color: #e2e8f0;
+    border-color: #94a3b8;
+}
+
+QMessageBox QPushButton:default {
+    background-color: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+}
+
+QMessageBox QPushButton:default:hover {
+    background-color: #1d4ed8;
+}

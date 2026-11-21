@@ -1,0 +1,7 @@
+/build/
+/.vs/
+*.user
+CMakeUserPresets.json
+
+/src/third_party/include/*.dll
+/src/third_party/include/*.lib

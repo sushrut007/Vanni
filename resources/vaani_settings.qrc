@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/vaani">
+        <file>settings_light.qss</file>
+        <file>settings_dark.qss</file>
+    </qresource>
+</RCC>
